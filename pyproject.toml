@@ -43,3 +43,7 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["fastrag"]
 
+[tool.uv]
+pip = "latest"
+upgrade-strategy = "eager"
+
