@@ -41,7 +41,7 @@ def setup_logging():
 
     # File handler
     file_handler = RotatingFileHandler(
-        "fastrag.log", maxBytes=10*1024*1024, backupCount=5
+        f"{APP_NAME}.log", maxBytes=10*1024*1024, backupCount=5
     )
     file_handler.setLevel(LOG_LEVEL)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
@@ -54,4 +54,4 @@ def setup_logging():
 
 
 logger = setup_logging()
-logger.info("Logging initialized for fastrag")
+logger.info(f"Logging initialized for {APP_NAME}")
