@@ -10,10 +10,10 @@ LOG_LEVEL = logging.INFO
 APP_NAME = "SuperMemPy"
 
 # Construct the database URL using environment variables
-DB_URL = f"postgresql://{os.environ.get('PGUSER')}:{os.environ.get('PGPASSWORD')}@{os.environ.get('PGHOST')}:{os.environ.get('PGPORT')}/{os.environ.get('PGDATABASE')}"
+# DB_URL = f"postgresql://{os.environ.get('PGUSER')}:{os.environ.get('PGPASSWORD')}@{os.environ.get('PGHOST')}:{os.environ.get('PGPORT')}/{os.environ.get('PGDATABASE')}"
 
 config = {
-    "database_url": DB_URL,
+    "database_url": os.environ.get("DATABASE_URL"),
     "embed_dimension": int(os.environ.get("EMBED_DIMENSION", 1536)),
     "embed_batch_size": int(os.environ.get("EMBED_BATCH_SIZE", 100)),
     "embeddings_provider": os.environ.get("EMBEDDING_PROVIDER"),
