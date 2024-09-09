@@ -1,12 +1,13 @@
 import logging
 import os
+from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOG_LEVEL = logging.INFO
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+LOG_LEVEL = logging.DEBUG  # Changed to DEBUG for more verbose logging
 APP_NAME = "SuperMemPy"
 
 # Construct the database URL using environment variables
@@ -30,8 +31,27 @@ config = {
 
 # Setup logging
 def setup_logging():
-    logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-    return logging.getLogger(APP_NAME)
+    logger = logging.getLogger(APP_NAME)
+    logger.setLevel(LOG_LEVEL)
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(LOG_LEVEL)
+    console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+    # File handler
+    file_handler = RotatingFileHandler(
+        f"{APP_NAME}.log", maxBytes=10*1024*1024, backupCount=5
+    )
+    file_handler.setLevel(LOG_LEVEL)
+    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+    # Add handlers to logger
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
 
 
 logger = setup_logging()
+logger.info(f"Logging initialized for {APP_NAME}")

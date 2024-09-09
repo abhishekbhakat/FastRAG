@@ -13,25 +13,30 @@ from fastrag.models import ChatForm, MessageHistoryModel, UploadForm, URLForm
 from fastrag.routes import ingest, query
 from fastrag.services.bootstrap import bootstrap_app
 
+logger.info("Initializing FastAPI application")
 app = FastAPI()
 app.message_history = []
 
+logger.info("Including routers")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(query.router, prefix="/api")
 
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting up application")
     try:
         bootstrap_app()
+        logger.info("Application bootstrapped successfully")
     except Exception as e:
-        logger.error(f"Error during startup: {str(e)}")
+        logger.error(f"Error during startup: {str(e)}", exc_info=True)
         # You might want to raise the exception here if you want to prevent the app from starting
         # raise e
 
 
 @app.get("/api/", response_model=FastUI, response_model_exclude_none=True)
 def api_index():
+    logger.debug("Handling API index request")
     return [
         c.PageTitle(text="RAG Chatbot"),
         c.Page(
