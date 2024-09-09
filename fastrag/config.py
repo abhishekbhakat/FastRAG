@@ -27,9 +27,11 @@ config = {
     "cache_dir": os.environ.get("CACHE_DIR", ".cache"),
 }
 
+
 # Setup logging
 def setup_logging():
     logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
     return logging.getLogger(APP_NAME)
+
 
 logger = setup_logging()

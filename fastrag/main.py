@@ -8,10 +8,10 @@ from fastui.components.display import DisplayLookup, DisplayMode
 from fastui.events import GoToEvent, PageEvent
 from starlette.responses import StreamingResponse
 
+from fastrag.config import logger
 from fastrag.models import ChatForm, MessageHistoryModel, UploadForm, URLForm
 from fastrag.routes import ingest, query
 from fastrag.services.bootstrap import bootstrap_app
-from fastrag.config import logger
 
 app = FastAPI()
 app.message_history = []
@@ -116,7 +116,7 @@ async def chat_response_generator(message: str) -> AsyncIterable[str]:
     response = await query.query(message)
     app.message_history.append(MessageHistoryModel(message=f"User: {message}"))
     app.message_history.append(MessageHistoryModel(message=f"Chatbot: {response['response']}"))
-    m = FastUI(root=[c.Markdown(text=response['response'])])
+    m = FastUI(root=[c.Markdown(text=response["response"])])
     msg = f"data: {m.model_dump_json(by_alias=True, exclude_none=True)}\n\n"
     yield msg
     while True:

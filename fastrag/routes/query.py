@@ -1,13 +1,12 @@
 from fastapi import APIRouter
-from llama_index.core import VectorStoreIndex
-from llama_index.vector_stores.postgres import PGVectorStore
 
 from fastrag.config import config
+from fastrag.services.llm import get_llm
 from fastrag.services.storage_context import get_index
 from fastrag.services.vector_store import get_vector_store
-from fastrag.services.llm import get_llm
 
 router = APIRouter()
+
 
 @router.post("/query")
 async def query(query: str):

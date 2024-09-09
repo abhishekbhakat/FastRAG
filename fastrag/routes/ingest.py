@@ -1,8 +1,9 @@
-from fastapi import APIRouter, File, UploadFile
-from llama_index.core import Document
-from llama_index.readers.file import PDFReader, DocxReader
 import tempfile
 from pathlib import Path
+
+from fastapi import APIRouter, File, UploadFile
+from llama_index.core import Document
+from llama_index.readers.file import DocxReader, PDFReader
 
 from fastrag.config import config
 from fastrag.services.storage_context import get_index
@@ -25,23 +26,18 @@ async def ingest_document(file: UploadFile = File(...)):
     vs = get_vector_store(config)
 
     # Load storage context and index
-    index, sc = get_index(config=config,
-                          vector_store=vs,
-                          cache_dir=config["cache_dir"])
+    index, sc = get_index(config=config, vector_store=vs, cache_dir=config["cache_dir"])
 
     # Determine file type and process accordingly
-    if file.filename.lower().endswith('.pdf'):
+    if file.filename.lower().endswith(".pdf"):
         pdf_reader = PDFReader()
         documents = pdf_reader.load_data(file=temp_file_path)
-    elif file.filename.lower().endswith('.docx'):
+    elif file.filename.lower().endswith(".docx"):
         docx_reader = DocxReader()
         documents = docx_reader.load_data(file=temp_file_path)
     else:
         # For other file types, treat as plain text
-        documents = [
-            Document(text=content.decode("utf-8", errors="ignore"),
-                     extra_info={"file_path": file.filename})
-        ]
+        documents = [Document(text=content.decode("utf-8", errors="ignore"), extra_info={"file_path": file.filename})]
 
     for document in documents:
         index.insert(document)

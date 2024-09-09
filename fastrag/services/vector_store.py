@@ -1,14 +1,13 @@
 from typing import Any
 from urllib.parse import urlparse
 
-from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.postgres import PGVectorStore
 
 
 def get_vector_store(config: dict[str, Any]) -> PGVectorStore:
     # Parse the database URL
     url = urlparse(config["database_url"])
-    
+
     # Extract connection details
     username = url.username
     password = url.password

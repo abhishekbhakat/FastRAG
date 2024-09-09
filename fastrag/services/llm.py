@@ -1,6 +1,9 @@
 from typing import Any
+
 from llama_index.llms.litellm import LiteLLM
+
 from fastrag.config import config
+
 
 async def generate_response(query: str, relevant_docs: list) -> str:
     model = config["llm_model"]
@@ -10,6 +13,7 @@ async def generate_response(query: str, relevant_docs: list) -> str:
     prompt = f"Based on the following context, answer the question: {query}\n\nContext: {context}"
     response = await llm.acomplete(prompt)
     return response.text
+
 
 def get_llm(config: dict[str, Any]) -> LiteLLM:
     llm_provider = config["llm_provider"]

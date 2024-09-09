@@ -8,7 +8,6 @@ def get_openai_embedding(config: dict[str, Any]) -> OpenAIEmbedding:
     return OpenAIEmbedding(api_key=config["embedding_api_key"], api_base=config.get("embedding_api_base"), model_name=config["embedding_model"])
 
 
-
 def get_ollama_embedding(config: dict[str, Any]) -> OllamaEmbedding:
     return OllamaEmbedding(model_name=config["embedding_model"])
 
