@@ -15,6 +15,7 @@ FastRAG is a powerful and user-friendly web application that combines FastAPI an
 
 - Docker and Docker Compose
 - Git (for cloning the repository)
+- Python 3.8+ (for local development)
 
 ## Quick Start
 
@@ -24,12 +25,18 @@ FastRAG is a powerful and user-friendly web application that combines FastAPI an
    cd fastrag
    ```
 
-2. Build and run the Docker containers:
+2. Create a `.env` file in the project root and add your configuration:
+   ```
+   DATABASE_URL=postgresql://user:password@localhost:5432/fastrag
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+3. Build and run the Docker containers:
    ```
    docker-compose up --build
    ```
 
-3. Access the application:
+4. Access the application:
    Open your web browser and navigate to `http://localhost:3000`
 
 ## Usage
