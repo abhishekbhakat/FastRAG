@@ -8,7 +8,7 @@ load_dotenv()
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
 LOG_LEVEL = logging.DEBUG  # Changed to DEBUG for more verbose logging
-APP_NAME = "SuperMemPy"
+APP_NAME = "fastrag"
 
 # Construct the database URL using environment variables
 # DB_URL = f"postgresql://{os.environ.get('PGUSER')}:{os.environ.get('PGPASSWORD')}@{os.environ.get('PGHOST')}:{os.environ.get('PGPORT')}/{os.environ.get('PGDATABASE')}"
@@ -41,7 +41,7 @@ def setup_logging():
 
     # File handler
     file_handler = RotatingFileHandler(
-        f"{APP_NAME}.log", maxBytes=10*1024*1024, backupCount=5
+        "fastrag.log", maxBytes=10*1024*1024, backupCount=5
     )
     file_handler.setLevel(LOG_LEVEL)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
@@ -54,4 +54,4 @@ def setup_logging():
 
 
 logger = setup_logging()
-logger.info(f"Logging initialized for {APP_NAME}")
+logger.info("Logging initialized for fastrag")
