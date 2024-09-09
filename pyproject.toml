@@ -43,9 +43,8 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["fastrag"]
 
-[tool.uv]
-pip = "latest"
-upgrade-strategy = "eager"
+[tool.uv.pip]
+# Note: Use -U flag for eager upgrades, e.g., `uv pip install -U package_name`
 
 
 [tool.ruff]
