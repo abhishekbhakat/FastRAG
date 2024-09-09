@@ -30,7 +30,8 @@ async def query(query: str):
         logger.debug("Getting LLM")
         llm = get_llm(config)
         logger.debug("Generating enhanced response with LLM")
-        enhanced_response = llm.complete(f"Based on the following information, please provide a concise and informative answer to the query '{query}': {response}")
+        context = f"You are an AI assistant for the FastRAG application. Use the following information to answer the user's query: {response}"
+        enhanced_response = llm.complete(f"{context}\n\nUser query: {query}\n\nAI assistant:")
         logger.info(f"Generated response for query: {query}")
 
         return {"query": query, "response": enhanced_response.text}
