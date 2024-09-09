@@ -47,3 +47,38 @@ packages = ["fastrag"]
 pip = "latest"
 upgrade-strategy = "eager"
 
+
+[tool.ruff]
+line-length = 200
+indent-width = 4
+fix = true
+preview = true
+
+lint.select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+    "W",  # pycodestyle warnings
+    "C90",  # Complexity
+    "C",  # flake8-comprehensions
+    "ISC",  # flake8-implicit-str-concat
+    "T10",  # flake8-debugger
+    "A",  # flake8-builtins
+    "UP",  # pyupgrade
+]
+
+lint.ignore = [
+    "C416",
+    "C408"
+]
+
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
