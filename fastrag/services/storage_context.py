@@ -52,11 +52,15 @@ def create_index(config: dict[str, Any], documents: list[Document], vector_store
 def get_index(config: dict[str, Any], vector_store: PGVectorStore, cache_dir: str | None = None) -> tuple[VectorStoreIndex, StorageContext]:
     logger.info("Getting index")
     if cache_dir:
-        logger.debug(f"Loading index from cache directory: {cache_dir}")
-        storage_context = get_storage_context(vector_store=vector_store, cache_dir=cache_dir)
-        index = load_index_from_storage(storage_context, embed_model=get_embedding_model(config=config))
-        logger.info("Index loaded successfully")
-        return index, storage_context
+        try:
+            logger.debug(f"Loading index from cache directory: {cache_dir}")
+            storage_context = get_storage_context(vector_store=vector_store, cache_dir=cache_dir)
+            index = load_index_from_storage(storage_context, embed_model=get_embedding_model(config=config))
+            logger.info("Index loaded successfully")
+            return index, storage_context
+        except ValueError:
+            logger.warning("Index not found in cache directory, returning none for index")
+            return None, storage_context
     else:
         logger.warning("No cache directory provided, returning None for index and storage context")
         return None, None

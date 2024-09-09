@@ -6,7 +6,7 @@ from llama_index.core import Document
 from llama_index.readers.file import DocxReader, PDFReader
 
 from fastrag.config import config, logger
-from fastrag.services.storage_context import get_index
+from fastrag.services.storage_context import get_index, create_index
 from fastrag.services.vector_store import get_vector_store
 
 router = APIRouter()
@@ -49,9 +49,13 @@ async def ingest_document(file: UploadFile = File(...)):
 
         logger.info(f"Processed {len(documents)} documents from {file.filename}")
 
-        for i, document in enumerate(documents):
-            logger.debug(f"Inserting document {i+1}/{len(documents)} into index")
-            index.insert(document)
+        if not index:
+            logger.info("Index not found, creating new index from documents")
+            index = create_index(config=config, documents=documents, vector_store=vs, cache_dir=config["cache_dir"])
+        else:
+            for i, document in enumerate(documents):
+                logger.debug(f"Inserting document {i+1}/{len(documents)} into index")
+                index.insert(document)
 
         logger.info("Persisting storage context")
         sc.persist(persist_dir=config["cache_dir"])
