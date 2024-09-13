@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class UploadForm(BaseModel):
-    file: Annotated[UploadFile, FormFile(accept="*/*")] = Field(description="Upload a document")
+    file: Annotated[UploadFile, FormFile(accept="*/*")] = Field(title="File")
 
 
 class ChatForm(BaseModel):

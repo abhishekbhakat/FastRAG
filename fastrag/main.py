@@ -10,7 +10,7 @@ from fastui.forms import fastui_form
 
 from fastrag.app_config import app
 from fastrag.config import logger
-from fastrag.default_page import get_page_components
+from fastrag.default_page import get_default_page
 from fastrag.models import ChatForm, MessageHistoryModel, UploadForm, URLForm
 from fastrag.routes import ingest, query
 from fastrag.services.bootstrap import bootstrap_app
@@ -37,13 +37,7 @@ async def startup_event():
 @app.get("/api/", response_model=FastUI, response_model_exclude_none=True)
 def api_index():
     logger.debug("Handling API index request")
-    return [
-        c.PageTitle(text="RAG Chatbot"),
-        c.Page(
-            components=get_page_components(),
-        ),
-        c.Footer(extra_text="RAG Chatbot powered by FastUI", links=[]),
-    ]
+    return get_default_page()
 
 
 @app.post("/api/upload_documents", response_model=FastUI, response_model_exclude_none=True)
