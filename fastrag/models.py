@@ -1,11 +1,12 @@
 from typing import Annotated
 
 from fastapi import UploadFile
+from fastui.forms import FormFile
 from pydantic import BaseModel, Field
 
 
 class UploadForm(BaseModel):
-    file: Annotated[UploadFile, Field(description="Upload a file")]
+    file: Annotated[UploadFile, FormFile(accept="*/*")] = Field(description="Upload a document")
 
 
 class ChatForm(BaseModel):
