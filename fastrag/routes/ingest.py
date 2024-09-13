@@ -1,12 +1,13 @@
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, File, UploadFile
+import httpx
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from llama_index.core import Document
 from llama_index.readers.file import DocxReader, PDFReader
 
 from fastrag.config import config, logger
-from fastrag.services.storage_context import get_index, create_index
+from fastrag.services.storage_context import create_index, get_index
 from fastrag.services.vector_store import get_vector_store
 
 router = APIRouter()
@@ -54,7 +55,7 @@ async def ingest_document(file: UploadFile = File(...)):
             index = create_index(config=config, documents=documents, vector_store=vs, cache_dir=config["cache_dir"])
         else:
             for i, document in enumerate(documents):
-                logger.debug(f"Inserting document {i+1}/{len(documents)} into index")
+                logger.debug(f"Inserting document {i + 1}/{len(documents)} into index")
                 index.insert(document)
 
         logger.info("Persisting storage context")
@@ -76,9 +77,41 @@ async def ingest_document(file: UploadFile = File(...)):
 @router.post("/ingest/url")
 async def ingest_url(url: str):
     logger.info(f"Starting ingestion for URL: {url}")
-    # Fetch content from URL
-    # Create embeddings
-    # Save to vector store
-    # Return success response
-    logger.info(f"URL ingestion not yet implemented: {url}")
-    return {"message": "URL ingestion not yet implemented", "status": "not_implemented"}
+
+    try:
+        # Fetch content from URL using httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"https://r.jina.ai/{url}")
+            response.raise_for_status()
+            content = response.text
+
+        # Create a Document object
+        document = Document(text=content, extra_info={"url": url})
+
+        # Get vector store
+        vs = get_vector_store(config)
+        logger.debug("Retrieved vector store")
+
+        # Load storage context and index
+        index, sc = get_index(config=config, vector_store=vs, cache_dir=config["cache_dir"])
+        logger.debug("Loaded storage context and index")
+
+        if not index:
+            logger.info("Index not found, creating new index from document")
+            index = create_index(config=config, documents=[document], vector_store=vs, cache_dir=config["cache_dir"])
+        else:
+            logger.debug("Inserting document into index")
+            index.insert(document)
+
+        logger.info("Persisting storage context")
+        sc.persist(persist_dir=config["cache_dir"])
+
+        logger.info(f"Successfully processed and ingested URL: {url}")
+        return {
+            "message": f"Successfully processed and ingested URL: {url}",
+            "status": "success",
+        }
+
+    except Exception as e:
+        logger.error(f"Error during URL ingestion: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing URL {url}: {str(e)}")
