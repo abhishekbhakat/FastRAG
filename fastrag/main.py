@@ -3,7 +3,7 @@ from collections.abc import AsyncIterable
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import HTMLResponse
-from fastui import FastUI, components as c, prebuilt_html
+from fastui import FastUI, components as c, prebuilt_html, AnyComponent
 from fastui.components.display import DisplayLookup, DisplayMode
 from fastui.events import GoToEvent, PageEvent
 from starlette.responses import StreamingResponse
@@ -33,21 +33,17 @@ async def startup_event():
         # You might want to raise the exception here if you want to prevent the app from starting
         # raise e
 
-
-@app.get("/api/", response_model=FastUI, response_model_exclude_none=True)
-def api_index():
-    logger.debug("Handling API index request")
+def get_page_components() -> list[AnyComponent]:
+    logger.debug("Getting page components")
     return [
-        c.PageTitle(text="RAG Chatbot"),
-        c.Page(
-            components=[
                 c.Heading(text="RAG Chatbot"),
                 c.Paragraph(text="Upload documents, paste URLs, and chat with your data using LLM and vector database."),
                 c.Heading(text="Upload Documents", level=2),
                 c.ModelForm(
                     model=UploadForm,
                     submit_url="/api/upload_documents",
-                    method="POST",
+                    loading=[c.Spinner(text='Uploading ...')],
+                    submit_trigger=PageEvent(name='upload_documents'),
                 ),
                 c.Heading(text="Add URLs", level=2),
                 c.ModelForm(model=URLForm, submit_url="/api/add_url", method="POST"),
@@ -74,35 +70,44 @@ def api_index():
                     components=[c.Text(text="Reset Chat")],
                     on_click=GoToEvent(url="/?reset=true"),
                 ),
+                c.Toast(
+                    title="Document Uploaded",
+                    body=[c.Paragraph(text='Successfully processed the document.')],
+                    open_trigger=PageEvent(name="document-upload-success"),
+                    position="bottom-center"
+                ),
+                c.Toast(
+                    title="Document Upload Failed",
+                    body=[c.Paragraph(text='Failed to process document.')],
+                    open_trigger=PageEvent(name="docuent-upload-failed"),
+                    position="bottom-center"
+                )
             ]
+
+@app.get("/api/", response_model=FastUI, response_model_exclude_none=True)
+def api_index():
+    logger.debug("Handling API index request")
+    return [
+        c.PageTitle(text="RAG Chatbot"),
+        c.Page(
+            components=get_page_components(),
         ),
         c.Footer(extra_text="RAG Chatbot powered by FastUI", links=[]),
     ]
 
 
-@app.post("/api/upload_documents")
-async def upload_documents(file: UploadFile = File(...)):
-    result = await ingest.ingest_document(file)
+@app.post("/api/upload_documents", response_model=FastUI, response_model_exclude_none=True)
+async def upload_documents(file: UploadFile = File(...)) -> list[AnyComponent]:
+    # result = await ingest.ingest_document(file)
+    result = {"status": "success"}
     if result["status"] == "success":
         return [
-            c.Toast(
-                title="Document Uploaded",
-                body=[c.Paragraph(text=f"Successfully processed: {file.filename}")],
-                open_trigger=PageEvent(name="show-toast"),
-                position="bottom-end",
-            ),
-            c.FireEvent(event=PageEvent(name="show-toast")),
-        ]
+        c.FireEvent(event=PageEvent(name="document-upload-success"))
+    ]
     else:
         return [
-            c.Toast(
-                title="Document Upload Failed",
-                body=[c.Paragraph(text=f"Failed to process: {file.filename}")],
-                open_trigger=PageEvent(name="show-toast"),
-                position="bottom-end",
-            ),
-            c.FireEvent(event=PageEvent(name="show-toast")),
-        ]
+        c.FireEvent(event=PageEvent(name="docuent-upload-failed"))
+    ]
 
 
 @app.post("/api/add_url")
@@ -131,4 +136,4 @@ async def chat_response_generator(message: str) -> AsyncIterable[str]:
 
 @app.get("/{path:path}")
 async def html_landing() -> HTMLResponse:
-    return HTMLResponse(prebuilt_html(title="SuperMemPy"))
+    return HTMLResponse(prebuilt_html(title="FastRAG"))

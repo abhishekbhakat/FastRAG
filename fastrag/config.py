@@ -10,6 +10,8 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d -
 LOG_LEVEL = logging.DEBUG  # Changed to DEBUG for more verbose logging
 APP_NAME = "fastrag"
 
+UPLOAD_DIRECTORY = os.environ.get("UPLOAD_DIRECTORY", "uploads")
+
 # Construct the database URL using environment variables
 # DB_URL = f"postgresql://{os.environ.get('PGUSER')}:{os.environ.get('PGPASSWORD')}@{os.environ.get('PGHOST')}:{os.environ.get('PGPORT')}/{os.environ.get('PGDATABASE')}"
 
