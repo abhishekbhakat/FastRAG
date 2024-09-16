@@ -1,9 +1,7 @@
 from fastui import AnyComponent, components as c
-from fastui.components.display import DisplayLookup, DisplayMode
 from fastui.events import GoToEvent, PageEvent
 
-from fastrag.app_config import app
-from fastrag.models import ChatForm, MessageHistoryModel, UploadForm, URLForm
+from fastrag.models import UploadForm, URLForm
 
 
 def get_default_page() -> list[AnyComponent]:
@@ -45,33 +43,12 @@ def get_page_components() -> list[AnyComponent]:
         c.Div(
             components=[
                 c.Heading(text="Add URLs", level=2),
-                c.ModelForm(model=URLForm, submit_url="/api/add_url", method="POST"),
+                c.ModelForm(model=URLForm, submit_url="/api/add_url", submit_trigger=PageEvent(name="add_url")),
             ],
             class_name="border-top mt-3 pt-1",
         ),
-        c.Heading(text="Chat", level=2),
-        c.Table(
-            data=app.message_history,
-            data_model=MessageHistoryModel,
-            columns=[DisplayLookup(field="message", mode=DisplayMode.markdown, table_width_percent=100)],
-            no_data_message="No messages yet.",
-        ),
-        c.ModelForm(model=ChatForm, submit_url="/api/chat", method="POST"),
-        c.Div(
-            components=[
-                c.ServerLoad(
-                    path="/api/sse/chat",
-                    sse=True,
-                    # load_trigger=PageEvent(name="load"),
-                    components=[],
-                ),
-            ],
-            class_name="my-2 p-2 border rounded",
-        ),
-        c.Link(
-            components=[c.Text(text="Reset Chat")],
-            on_click=GoToEvent(url="/?reset=true"),
-        ),
         c.Toast(title="Document Uploaded", body=[c.Paragraph(text="Successfully processed the document.")], open_trigger=PageEvent(name="document-upload-success"), position="bottom-center"),
         c.Toast(title="Document Upload Failed", body=[c.Paragraph(text="Failed to process document.")], open_trigger=PageEvent(name="docuent-upload-failed"), position="bottom-center"),
+        c.Toast(title="Add URL Success", body=[c.Paragraph(text="Successfully added URL.")], open_trigger=PageEvent(name="add_url_success"), position="bottom-center"),
+        c.Toast(title="Add URL Failed", body=[c.Paragraph(text="Failed to add URL.")], open_trigger=PageEvent(name="add_url_failed"), position="bottom-center"),
     ]

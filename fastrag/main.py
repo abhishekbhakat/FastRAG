@@ -68,9 +68,26 @@ async def upload_documents(file: UploadFile = File(...)) -> list[AnyComponent]:
 
 @app.post("/api/add_url")
 async def add_url(url_form: URLForm):
-    return [
-        c.Page(components=[c.Heading(text="URL Added"), c.Paragraph(text=f"Successfully added URL: {url_form.url}"), c.Link(components=[c.Text(text="Back to Home")], on_click=GoToEvent(url="/"))])
-    ]
+    # result = await ingest.ingest_url(url_form.url)
+    result = {"status": "success"}
+    if result["status"] == "success":
+        return [
+            c.FireEvent(event=PageEvent(name="add_url_success")),
+            c.ModelForm(
+                model=URLForm,
+                submit_url="/api/add_url",
+                submit_trigger=PageEvent(name="add_url"),
+            ),
+        ]
+    else:
+        return [
+            c.FireEvent(event=PageEvent(name="add_url_failed")),
+            c.ModelForm(
+                model=URLForm,
+                submit_url="/api/add_url",
+                submit_trigger=PageEvent(name="add_url"),
+            ),
+        ]
 
 
 @app.post("/api/chat", response_model=FastUI, response_model_exclude_none=True)
