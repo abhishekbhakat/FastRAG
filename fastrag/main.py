@@ -42,7 +42,7 @@ def api_index():
 
 @app.post("/api/upload_documents", response_model=FastUI, response_model_exclude_none=True)
 async def upload_documents(file: UploadFile = File(...)) -> list[AnyComponent]:
-    # result = await ingest.ingest_document(file)
+    result = await ingest.ingest_document(file)
     result = {"status": "success"}
     if result["status"] == "success":
         return [
@@ -66,9 +66,10 @@ async def upload_documents(file: UploadFile = File(...)) -> list[AnyComponent]:
         ]
 
 
-@app.post("/api/add_url")
-async def add_url(url_form: URLForm):
-    # result = await ingest.ingest_url(url_form.url)
+@app.post("/api/add_url", response_model=FastUI, response_model_exclude_none=True)
+async def add_url(form: Annotated[URLForm, fastui_form(URLForm)]):
+    logger.debug("Ingest URL: " + form.url)
+    result = await ingest.ingest_url(form.url)
     result = {"status": "success"}
     if result["status"] == "success":
         return [

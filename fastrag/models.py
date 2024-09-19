@@ -14,7 +14,7 @@ class ChatForm(BaseModel):
 
 
 class URLForm(BaseModel):
-    url: str = Field(title="URL")
+    url: str = Field(title="URL", min_length=1)
 
 
 class MessageHistoryModel(BaseModel):
