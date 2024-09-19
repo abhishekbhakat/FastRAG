@@ -19,3 +19,18 @@ class URLForm(BaseModel):
 
 class MessageHistoryModel(BaseModel):
     message: str
+
+
+class ServiceStatus(BaseModel):
+    service_name: str
+    status: str  # "online" or "offline"
+    last_checked: str  # Timestamp of the last check
+
+    def save(self):
+        # Implement the save method to store the status in the database or other storage
+        pass
+
+    @classmethod
+    def get(cls, service_name: str):
+        # Implement the get method to retrieve the status from the database or other storage
+        return cls(service_name=service_name, status="online", last_checked="2024-09-19T12:00:00")  # Placeholder

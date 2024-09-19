@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from llama_index.vector_stores.postgres import PGVectorStore
 
 from fastrag.config import logger
+from fastrag.models import ServiceStatus
 
 
 def get_vector_store(config: dict[str, Any]) -> PGVectorStore:
@@ -31,7 +32,14 @@ def get_vector_store(config: dict[str, Any]) -> PGVectorStore:
             embed_dim=config["embed_dimension"],
         )
         logger.info("Vector store initialized successfully")
+        save_vector_store_status("online")
         return vector_store
     except Exception as e:
         logger.error(f"Error initializing vector store: {str(e)}", exc_info=True)
+        save_vector_store_status("offline")
         raise
+
+
+def save_vector_store_status(status: str):
+    from datetime import datetime
+    ServiceStatus(service_name="VectorStore", status=status, last_checked=datetime.now().isoformat()).save()

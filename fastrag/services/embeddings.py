@@ -4,21 +4,43 @@ from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 
 from fastrag.config import logger
+from fastrag.models import ServiceStatus
 
 
 def get_openai_embedding(config: dict[str, Any]) -> OpenAIEmbedding:
     logger.info("Initializing OpenAI embedding")
-    return OpenAIEmbedding(api_key=config["embedding_api_key"], api_base=config.get("embedding_api_base"), model_name=config["embedding_model"])
+    try:
+        embedding = OpenAIEmbedding(api_key=config["embedding_api_key"], api_base=config.get("embedding_api_base"), model_name=config["embedding_model"])
+        save_embedding_status("online")
+        return embedding
+    except Exception as e:
+        logger.error(f"Error initializing OpenAI embedding: {str(e)}", exc_info=True)
+        save_embedding_status("offline")
+        raise
 
 
 def get_ollama_embedding(config: dict[str, Any]) -> OllamaEmbedding:
     logger.info("Initializing Ollama embedding")
-    return OllamaEmbedding(model_name=config["embedding_model"])
+    try:
+        embedding = OllamaEmbedding(model_name=config["embedding_model"])
+        save_embedding_status("online")
+        return embedding
+    except Exception as e:
+        logger.error(f"Error initializing Ollama embedding: {str(e)}", exc_info=True)
+        save_embedding_status("offline")
+        raise
 
 
 def get_lmstudio_embedding(config: dict[str, Any]) -> OpenAIEmbedding:
     logger.info("Initializing LMStudio embedding")
-    return OpenAIEmbedding(api_key=config["embedding_api_key"], api_base=config.get("embedding_api_base"), model_name=config["embedding_model"])
+    try:
+        embedding = OpenAIEmbedding(api_key=config["embedding_api_key"], api_base=config.get("embedding_api_base"), model_name=config["embedding_model"])
+        save_embedding_status("online")
+        return embedding
+    except Exception as e:
+        logger.error(f"Error initializing LMStudio embedding: {str(e)}", exc_info=True)
+        save_embedding_status("offline")
+        raise
 
 
 def get_embedding_model(config: dict[str, Any]) -> OpenAIEmbedding | OllamaEmbedding:
@@ -38,3 +60,8 @@ def get_embedding_model(config: dict[str, Any]) -> OpenAIEmbedding | OllamaEmbed
     except Exception as e:
         logger.error(f"Error initializing embedding model: {str(e)}", exc_info=True)
         raise
+
+
+def save_embedding_status(status: str):
+    from datetime import datetime
+    ServiceStatus(service_name="Embedding", status=status, last_checked=datetime.now().isoformat()).save()

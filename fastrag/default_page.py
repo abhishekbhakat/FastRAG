@@ -16,7 +16,12 @@ def get_default_page() -> list[AnyComponent]:
             ],
         ),
         c.Page(components=get_page_components()),
-        c.Footer(extra_text="RAG Chatbot powered by FastUI", links=[]),
+        c.Footer(
+            extra_text="RAG Chatbot powered by FastUI",
+            links=[
+                c.Link(components=[c.Text(text="Health Status")], on_click=GoToEvent(url="/health"), active="startswith:/health", mode="footer"),
+            ],
+        ),
     ]
 
 

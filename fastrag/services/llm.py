@@ -3,6 +3,7 @@ from typing import Any
 from llama_index.llms.litellm import LiteLLM
 
 from fastrag.config import config, logger
+from fastrag.models import ServiceStatus
 
 
 async def generate_response(query: str, relevant_docs: list) -> str:
@@ -17,9 +18,11 @@ async def generate_response(query: str, relevant_docs: list) -> str:
         logger.debug(f"Sending prompt to LLM: {prompt[:100]}...")  # Log first 100 chars of prompt
         response = await llm.acomplete(prompt)
         logger.info("Response generated successfully")
+        save_llm_status("online")
         return response.text
     except Exception as e:
         logger.error(f"Error generating response: {str(e)}", exc_info=True)
+        save_llm_status("offline")
         raise
 
 
@@ -46,7 +49,14 @@ def get_llm(config: dict[str, Any]) -> LiteLLM:
         logger.debug(f"LiteLLM kwargs: {litellm_kwargs}")
         llm = LiteLLM(**litellm_kwargs)
         logger.info("LLM initialized successfully")
+        save_llm_status("online")
         return llm
     except Exception as e:
         logger.error(f"Error initializing LLM: {str(e)}", exc_info=True)
+        save_llm_status("offline")
         raise
+
+
+def save_llm_status(status: str):
+    from datetime import datetime
+    ServiceStatus(service_name="LLM", status=status, last_checked=datetime.now().isoformat()).save()
