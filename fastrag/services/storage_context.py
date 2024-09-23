@@ -39,7 +39,7 @@ def get_storage_context(vector_store: PGVectorStore, cache_dir: str | None = Non
     return storage_context
 
 
-def create_index(config: dict[str, Any], documents: list[Document], vector_store: PGVectorStore, cache_dir: str | None = None) -> VectorStoreIndex:
+def create_index(config: dict[str, Any], documents: list[Document], vector_store: PGVectorStore, cache_dir: str | None = None) -> tuple[VectorStoreIndex | None, StorageContext | None]:
     logger.info("Creating index")
     # TODO: Instead of config it should expect embedding model and vector store
     embed_model = get_embedding_model(config=config)
@@ -51,8 +51,9 @@ def create_index(config: dict[str, Any], documents: list[Document], vector_store
     return index, storage_context
 
 
-def get_index(config: dict[str, Any], vector_store: PGVectorStore, cache_dir: str | None = None) -> tuple[VectorStoreIndex, StorageContext]:
+def get_index(config: dict[str, Any], vector_store: PGVectorStore, cache_dir: str | None = None) -> tuple[VectorStoreIndex | None, StorageContext | None]:
     logger.info("Getting index")
+    storage_context = None  # Initialize storage_context to None
     if cache_dir:
         try:
             logger.debug(f"Loading index from cache directory: {cache_dir}")
