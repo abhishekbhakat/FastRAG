@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 from llama_index.core import Document, StorageContext, VectorStoreIndex, load_index_from_storage
@@ -23,7 +24,8 @@ def set_storage_context(vector_store: PGVectorStore, cache_dir: str | None = Non
 def persist_storage_context(storage_context: StorageContext, cache_dir: str | None = None):
     if cache_dir:
         logger.info(f"Persisting storage context to cache directory: {cache_dir}")
-        storage_context.persist(persist_dir=cache_dir)
+        cache_path = Path(cache_dir)
+        storage_context.persist(persist_dir=cache_path)
 
 
 def get_storage_context(vector_store: PGVectorStore, cache_dir: str | None = None) -> StorageContext:
@@ -46,7 +48,7 @@ def create_index(config: dict[str, Any], documents: list[Document], vector_store
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context, embed_model=embed_model, embed_batch_size=10, index_batch_size=100)
     logger.info("Index created successfully")
     persist_storage_context(storage_context, cache_dir)
-    return index
+    return index, storage_context
 
 
 def get_index(config: dict[str, Any], vector_store: PGVectorStore, cache_dir: str | None = None) -> tuple[VectorStoreIndex, StorageContext]:

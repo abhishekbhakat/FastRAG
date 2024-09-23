@@ -98,13 +98,12 @@ async def ingest_url(url: str):
 
         if not index:
             logger.info("Index not found, creating new index from document")
-            index = create_index(config=config, documents=[document], vector_store=vs, cache_dir=config["cache_dir"])
+            index, sc = create_index(config=config, documents=[document], vector_store=vs, cache_dir=config["cache_dir"])
         else:
             logger.debug("Inserting document into index")
             index.insert(document)
-
-        logger.info("Persisting storage context")
-        sc.persist(persist_dir=config["cache_dir"])
+            logger.info("Persisting storage context")
+            sc.persist(persist_dir=config["cache_dir"])
 
         logger.info(f"Successfully processed and ingested URL: {url}")
         return {
