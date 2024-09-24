@@ -1,13 +1,12 @@
-from typing import Any
 from urllib.parse import urlparse
 
 from llama_index.vector_stores.postgres import PGVectorStore
 
-from fastrag.config import logger
+from fastrag.config import config, logger
 from fastrag.models import ServiceStatus
 
 
-def get_vector_store(config: dict[str, Any]) -> PGVectorStore:
+def get_vector_store() -> PGVectorStore:
     logger.info("Initializing vector store")
     try:
         # Parse the database URL
@@ -42,4 +41,5 @@ def get_vector_store(config: dict[str, Any]) -> PGVectorStore:
 
 def save_vector_store_status(status: str):
     from datetime import datetime
+
     ServiceStatus(service_name="VectorStore", status=status, last_checked=datetime.now().isoformat()).save()

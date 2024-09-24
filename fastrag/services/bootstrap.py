@@ -13,17 +13,19 @@ def bootstrap_app():
         os.makedirs(config["cache_dir"])
 
     # Initialize vector store
-    vs = get_vector_store(config)
+    vs = get_vector_store()
 
     # Attempt to load the existing index
-    index, _ = get_index(config=config, vector_store=vs, cache_dir=config["cache_dir"])
+    index, sc = get_index(vector_store=vs)
     if index:
         logger.info("Existing index loaded successfully")
+        config.update({"index": index, "vector_store": vs, "storage_context": sc})
         return
 
     # Initialize storage context and create a new index if the existing one cannot be loaded
-    _ = set_storage_context(vs, config["cache_dir"])
-    index = create_index(config=config, documents=[], vector_store=vs, cache_dir=config["cache_dir"])
+    sc = set_storage_context(vs, config["cache_dir"])
+    index = create_index(documents=[], vector_store=vs)
+    config.update({"index": index, "vector_store": vs, "storage_context": sc})
 
     logger.info("Application bootstrapped successfully")
     return
