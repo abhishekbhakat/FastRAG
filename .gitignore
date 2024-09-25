@@ -6,3 +6,5 @@
 *.pyc
 *.log
 *.ruff_cache/
+
+uploads/
