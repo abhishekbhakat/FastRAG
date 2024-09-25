@@ -8,7 +8,7 @@
 *.ruff_cache/
 
 uploads/
-RAG Context/
+RAG_Context/
 Project_planning/
 
 utils/
