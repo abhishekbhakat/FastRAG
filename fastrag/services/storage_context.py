@@ -3,6 +3,7 @@ from pathlib import Path
 from llama_index.core import Document, StorageContext, VectorStoreIndex, load_index_from_storage
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.storage.index_store import SimpleIndexStore
+from llama_index.core.vector_stores.types import MetadataFilters
 from llama_index.vector_stores.postgres import PGVectorStore
 
 from fastrag.config import config, logger
@@ -36,19 +37,19 @@ def get_storage_context(vector_store: PGVectorStore) -> StorageContext:
         storage_context = StorageContext.from_defaults(persist_dir=cache_dir, vector_store=vector_store)
     else:
         logger.debug("Creating new storage context")
-        storage_context = set_storage_context(vector_store, cache_dir)
+        storage_context = set_storage_context(vector_store)
     return storage_context
 
 
 def create_index(documents: list[Document], vector_store: PGVectorStore) -> tuple[VectorStoreIndex | None, StorageContext | None]:
     logger.info("Creating index")
     # TODO: Instead of config it should expect embedding model and vector store
-    embed_model = get_embedding_model(config=config)
-    storage_context = get_storage_context(vector_store, cache_dir)
+    embed_model = get_embedding_model()
+    storage_context = get_storage_context(vector_store)
     logger.debug(f"Creating index with {len(documents)} documents")
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context, embed_model=embed_model, embed_batch_size=10, index_batch_size=100)
     logger.info("Index created successfully")
-    persist_storage_context(storage_context, cache_dir)
+    persist_storage_context(storage_context)
     return index, storage_context
 
 
@@ -72,33 +73,89 @@ def get_index(vector_store: PGVectorStore) -> tuple[VectorStoreIndex | None, Sto
 
 def get_all_documents(index: VectorStoreIndex) -> list[dict]:
     logger.info("Getting all documents")
-    documents = []
-    for ref_doc_id, doc_info in index.ref_doc_info.items():
-        doc_metadata = doc_info.metadata.copy()
-        doc_metadata["ref_doc_id"] = ref_doc_id
-        documents.append(doc_metadata)
-    return documents
+    try:
+        vector_store = index._vector_store
+        logger.debug(f"Vector store: {vector_store}")
+        logger.debug(f"Vector store type: {type(vector_store)}")
+
+        if isinstance(vector_store, PGVectorStore):
+            # Create a dummy filter that always evaluates to true
+            dummy_filter = MetadataFilters(filters=[MetadataFilters(filters=[], condition="or")], condition="and")
+
+            nodes = vector_store.get_nodes(filters=dummy_filter)
+
+            logger.debug(f"Retrieved {len(nodes)} documents from vector store")
+
+            documents = []
+            for node in nodes:
+                doc_metadata = node.metadata.copy() if node.metadata else {}
+                doc_metadata["ref_doc_id"] = node.node_id
+                doc_metadata["text"] = node.get_content()
+                documents.append(doc_metadata)
+
+            logger.info(f"Processed {len(documents)} documents")
+            return documents
+        else:
+            logger.warning(f"Unsupported vector store type: {type(vector_store)}")
+            return []
+    except Exception as e:
+        logger.error(f"Error getting all documents: {str(e)}", exc_info=True)
+        return []
 
 
 def get_ref_doc_id(index: VectorStoreIndex, metadata: dict) -> str | None:
-    for ref_doc_id, doc_info in index.ref_doc_info.items():
-        if all(doc_info.metadata.get(k) == v for k, v in metadata.items()):
-            return ref_doc_id
+    vector_store = index._vector_store
+    if isinstance(vector_store, PGVectorStore):
+        # Construct a query to find a document with matching metadata
+        query = "SELECT id FROM vector_store WHERE "
+        conditions = []
+        for key, value in metadata.items():
+            conditions.append(f"metadata->'{key}' = '{value}'")
+        query += " AND ".join(conditions)
+
+        result = vector_store.client.query(query)
+        if result:
+            return result[0]["id"]
     return None
 
 
 def get_document(index: VectorStoreIndex, storage_context: StorageContext, metadata: dict) -> dict | None:
-    ref_doc_id = get_ref_doc_id(metadata)
+    ref_doc_id = get_ref_doc_id(index, metadata)
     if ref_doc_id:
-        doc_info = index.ref_doc_info[ref_doc_id]
-        return {"ref_doc_id": ref_doc_id, "metadata": doc_info.metadata, "text": storage_context.docstore.get_document(ref_doc_id).text}
+        vector_store = index._vector_store
+        if isinstance(vector_store, PGVectorStore):
+            result = vector_store.client.query(f"SELECT * FROM vector_store WHERE id = '{ref_doc_id}'")
+            if result:
+                doc = result[0]
+                return {"ref_doc_id": ref_doc_id, "metadata": doc.get("metadata", {}), "text": doc.get("text", "")}
     return None
 
 
 def delete_document(index: VectorStoreIndex, storage_context: StorageContext, metadata: dict) -> bool:
-    ref_doc_id = get_ref_doc_id(metadata)
+    ref_doc_id = get_ref_doc_id(index, metadata)
     if ref_doc_id:
-        index.delete_ref_doc(ref_doc_id, delete_from_docstore=True)
-        storage_context.persist(persist_dir=cache_dir)
-        return True
+        vector_store = index._vector_store
+        if isinstance(vector_store, PGVectorStore):
+            vector_store.client.query(f"DELETE FROM vector_store WHERE id = '{ref_doc_id}'")
+            storage_context.persist(persist_dir=cache_dir)
+            return True
     return False
+
+
+def reset_documents(index: VectorStoreIndex, storage_context: StorageContext) -> bool:
+    logger.info("Resetting documents")
+    vector_store = index._vector_store
+    if isinstance(vector_store, PGVectorStore):
+        try:
+            vector_store.clear()
+            logger.info("Vector store cleared successfully")
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+            persist_storage_context(storage_context)
+            logger.info("Empty storage context persisted")
+            return True
+        except Exception as e:
+            logger.error(f"Error resetting documents: {str(e)}", exc_info=True)
+            return False
+    else:
+        logger.warning(f"Unsupported vector store type: {type(vector_store)}")
+        return False

@@ -63,7 +63,7 @@ def get_page_components() -> list[AnyComponent]:
                 c.Div(
                     components=[
                         c.ServerLoad(
-                            path="/api/get_documents",
+                            path="/get_documents",
                             load_trigger=PageEvent(name="load-documents"),
                             components=[
                                 c.Table(
