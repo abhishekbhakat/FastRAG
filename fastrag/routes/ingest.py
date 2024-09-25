@@ -1,4 +1,3 @@
-import tempfile
 import traceback
 from pathlib import Path
 
@@ -27,26 +26,29 @@ class Loaded_Document(BaseModel):
 @router.post("/ingest/document", response_model=FastUI, response_model_exclude_none=True)
 async def ingest_document(file: UploadFile = File(...)):
     logger.info(f"Starting ingestion for document: {file.filename}")
+    original_filename = file.filename
     try:
         # Read file content
         content = await file.read()
         logger.debug(f"Read {len(content)} bytes from {file.filename}")
 
-        # Save the uploaded file content to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file.write(content)
-            temp_file_path = Path(temp_file.name)
-        logger.debug(f"Saved content to temporary file: {temp_file_path}")
+        local_upload_dir = config.get("upload_dir")
+
+        # Save the file to the local directory
+        file_path = Path(local_upload_dir) / original_filename
+        file_path.write_bytes(content)
+
+        logger.debug(f"Saved content to local file: {file_path}")
 
         # Determine file type and process accordingly
         if file.filename.lower().endswith(".pdf"):
             logger.info("Processing PDF file")
             pdf_reader = PDFReader()
-            documents = pdf_reader.load_data(file=temp_file_path)
+            documents = pdf_reader.load_data(file=str(file_path))
         elif file.filename.lower().endswith(".docx"):
             logger.info("Processing DOCX file")
             docx_reader = DocxReader()
-            documents = docx_reader.load_data(file=temp_file_path)
+            documents = docx_reader.load_data(file=str(file_path))
         else:
             logger.info("Processing as plain text")
             documents = [Document(text=content.decode("utf-8", errors="ignore"), extra_info={"file_path": file.filename})]
@@ -126,13 +128,15 @@ async def get_documents():
 
         documents = get_all_documents(index)
         logger.info(f"Retrieved {len(documents)} documents")
-        logger.debug(f"Documents: {documents}")
+        # logger.debug(f"Documents: {documents}")
 
         if not documents:
             return [c.Paragraph(text="No documents found in the index.")]
 
-        table_data = [Loaded_Document(doc_type=doc.get("type", "N/A"), name=doc.get("filename", doc.get("url", "N/A")), doc_id=doc.get("ref_doc_id", "N/A")) for doc in documents]
-        logger.debug(f"Table data: {table_data}")
+        # Find unique filename or URLs
+
+        table_data = [Loaded_Document(doc_type="URL" if doc.get("url") else "File", name=doc.get("filename", doc.get("url", "N/A")), doc_id=doc.get("ref_doc_id", "N/A")) for doc in documents]
+        # logger.debug(f"Table data: {table_data}")
 
         result = [
             c.Table(
@@ -145,7 +149,7 @@ async def get_documents():
                 ],
             )
         ]
-        logger.debug(f"Returning result: {result}")
+        # logger.debug(f"Returning result: {result}")
         return result
     except Exception as e:
         error_message = f"Error fetching documents: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
@@ -166,7 +170,7 @@ async def reset_documents():
             index.delete_ref_doc("*", delete_from_docstore=True)
 
             # Clear the vector store
-            vs.delete_index()
+            vs.clear()
 
             # Create a new empty index
             index, sc = create_index(documents=[], vector_store=vs)
