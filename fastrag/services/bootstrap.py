@@ -11,7 +11,7 @@ def new_storage_context():
 
     # Initialize storage context and create a new index if the existing one cannot be loaded
     sc = set_storage_context(vs)
-    index = create_index(documents=[], vector_store=vs)
+    index, sc = create_index(documents=[], vector_store=vs)
     config.update({"index": index, "vector_store": vs, "storage_context": sc})
 
 
@@ -24,6 +24,11 @@ def bootstrap_app():
         new_storage_context()
         logger.info("Application bootstrapped successfully")
         return
+
+    # Create upload directory if it doesn't exist
+    if not os.path.exists(config["upload_dir"]):
+        os.makedirs(config["upload_dir"])
+        logger.info("Upload directory created successfully")
 
     # Initialize vector store
     vs = get_vector_store()
