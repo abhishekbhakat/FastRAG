@@ -10,7 +10,6 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d -
 LOG_LEVEL = logging.DEBUG  # Changed to DEBUG for more verbose logging
 APP_NAME = "fastrag"
 
-UPLOAD_DIRECTORY = os.environ.get("UPLOAD_DIRECTORY", "uploads")
 
 # Construct the database URL using environment variables
 # DB_URL = f"postgresql://{os.environ.get('PGUSER')}:{os.environ.get('PGPASSWORD')}@{os.environ.get('PGHOST')}:{os.environ.get('PGPORT')}/{os.environ.get('PGDATABASE')}"
@@ -28,6 +27,7 @@ config = {
     "llm_api_base": os.environ.get("LLM_API_BASE_URL"),
     "llm_api_key": os.environ.get("LLM_API_KEY"),
     "cache_dir": os.environ.get("CACHE_DIR", ".cache"),
+    "upload_dir": os.environ.get("UPLOAD_DIR", "uploads"),
 }
 
 
@@ -42,9 +42,7 @@ def setup_logging():
     console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 
     # File handler
-    file_handler = RotatingFileHandler(
-        f"{APP_NAME}.log", maxBytes=10*1024*1024, backupCount=5
-    )
+    file_handler = RotatingFileHandler(f"{APP_NAME}.log", maxBytes=10 * 1024 * 1024, backupCount=5)
     file_handler.setLevel(LOG_LEVEL)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 
